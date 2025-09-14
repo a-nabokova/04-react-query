@@ -21,7 +21,7 @@ function App() {
  const [searchValue, setSearchValue] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isError, isSuccess } = useQuery({
     queryKey: ['movies', searchValue, currentPage ],
     queryFn: () => fetchMovies(searchValue, currentPage ),
     enabled: searchValue !== "",
@@ -29,10 +29,10 @@ function App() {
     });
   
    useEffect(() => {
-    if (data && data.results.length === 0) {
+    if (isSuccess && data?.results.length === 0) {
       toast.error('No movies found for your request.');
     }
-  }, [data]);
+  }, [isSuccess, data]);
 
   const totalPage = data?.total_pages || 0;
 
@@ -57,25 +57,26 @@ function App() {
       <div className={css.app}>
         <SearchBar onSubmit={handleMovieSearch} />
 
-        {isLoading && <Loader />}
-        {error && !isLoading && <ErrorMessage />}
-         {data && totalPage > 1 && (
-        <ReactPaginate
-          pageCount={totalPage}
-        pageRangeDisplayed={5}     marginPagesDisplayed={1}
-          onPageChange={({ selected }) => setCurrentPage(selected + 1)}
-          forcePage={currentPage - 1}
-          containerClassName={css.pagination}
-          activeClassName={css.active}
-          nextLabel="→"
-          previousLabel="←"
-        />
-      )}
+         {isSuccess && data?.results.length > 0 && totalPage > 1 && (
+    <ReactPaginate
+      pageCount={totalPage}
+      pageRangeDisplayed={5}
+      marginPagesDisplayed={1}
+      onPageChange={({ selected }) => setCurrentPage(selected + 1)}
+      forcePage={currentPage - 1}
+      containerClassName={css.pagination}
+      activeClassName={css.active}
+      nextLabel="→"
+      previousLabel="←"
+    />
+  )}
 
-        {!isLoading && !error && (
-        <MovieGrid movies={data?.results || []} onSelect={handleSelectedMovie} />
-      )}
-         
+        {isLoading && <Loader />}
+        {isError && <ErrorMessage />}
+         {isSuccess && data?.results.length > 0 && (
+    <MovieGrid movies={data.results} onSelect={handleSelectedMovie} />
+  )}
+ 
         {isModalOpen && selectedMovie && (
           <MovieModal movie={selectedMovie} onClose={closeModal} />
         )}
